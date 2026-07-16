@@ -100,6 +100,23 @@
   color: #ef4444;
 }
 
+/* ---- Report timeframe pills ---- */
+.range-pill {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid #2a3355;
+  background: #151b30;
+  color: #98a2c8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.range-pill.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
 /* ---- Toast ---- */
 #toast {
   position: fixed;
