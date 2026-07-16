@@ -1,6 +1,6 @@
 // Network-first for the app shell so deploys show up immediately; API calls
 // bypass the cache entirely.
-const CACHE = "fuellog-v2";
+const CACHE = "fuellog-v3";
 const SHELL = [
   "/",
   "/index.html",
@@ -11,6 +11,7 @@ const SHELL = [
   "/lib/format.js",
   "/lib/ranges.js",
   "/lib/reminders.js",
+  "/lib/trips.js",
 ];
 
 self.addEventListener("install", (e) => {

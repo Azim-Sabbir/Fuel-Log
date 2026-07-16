@@ -108,6 +108,15 @@
         </p>
       </section>
 
+      <section id="tripSection" class="px-4 mt-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs uppercase tracking-wide text-muted">Trips</h2>
+          <button id="addTripBtn" class="text-xs text-good">＋ Add</button>
+        </div>
+        <ul id="tripList" class="flex flex-col gap-2"></ul>
+        <p id="tripEmpty" class="hidden text-muted text-sm py-3">No trips yet.</p>
+      </section>
+
       <section id="reminderSection" class="px-4 mt-6">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-xs uppercase tracking-wide text-muted">Reminders</h2>
@@ -144,6 +153,7 @@
         <label>Volume (L)<input type="number" id="f_volume" step="0.01" min="0.01" required /></label>
         <label>Cost (৳)<input type="number" id="f_cost" step="0.01" min="0" required /></label>
         <label>Location<input type="text" id="f_location" placeholder="e.g. Padma, Mirpur" /></label>
+        <label>Trip (optional)<select id="f_trip"></select></label>
         <label class="row"><input type="checkbox" id="f_isFull" checked /> Full tank</label>
         <menu>
           <button value="cancel" type="button" data-close>Cancel</button>
@@ -178,6 +188,7 @@
         <label>Cost (৳)<input type="number" id="s_cost" step="0.01" min="0" /></label>
         <label>Location<input type="text" id="s_location" /></label>
         <label>Notes<input type="text" id="s_notes" /></label>
+        <label>Trip (optional)<select id="s_trip"></select></label>
         <menu>
           <button value="cancel" type="button" data-close>Cancel</button>
           <button value="save" id="serviceSave">Save</button>
@@ -203,6 +214,38 @@
           <button value="save" id="reminderSave">Save</button>
         </menu>
       </form>
+    </dialog>
+
+    <!-- Add trip dialog -->
+    <dialog id="tripDialog" class="dlg">
+      <form id="tripForm" method="dialog">
+        <h3>Add trip</h3>
+        <label>Name<input type="text" id="t_name" required placeholder="e.g. Cox's Bazar" /></label>
+        <label
+          >Category<select id="t_category">
+            <option value="personal">Personal</option>
+            <option value="business">Business</option>
+            <option value="vacation">Vacation</option>
+          </select></label
+        >
+        <div class="two">
+          <label>Start date<input type="date" id="t_start" /></label>
+          <label>End date<input type="date" id="t_end" /></label>
+        </div>
+        <menu>
+          <button value="cancel" type="button" data-close>Cancel</button>
+          <button value="save" id="tripSave">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Trip detail dialog -->
+    <dialog id="tripDetailDialog" class="dlg">
+      <h3 id="td_title">Trip</h3>
+      <div id="td_body"></div>
+      <menu>
+        <button type="button" data-close>Close</button>
+      </menu>
     </dialog>
 
     <p id="toast" class="hidden"></p>

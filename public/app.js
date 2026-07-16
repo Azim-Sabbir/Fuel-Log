@@ -2,6 +2,7 @@ import { computeEntries, summarize } from "/lib/economy.js";
 import { fmtBDT, fmtKm, fmtKmPerL } from "/lib/format.js";
 import { dhakaToday } from "/lib/ranges.js";
 import { reminderStatus } from "/lib/reminders.js";
+import { tripSummary } from "/lib/trips.js";
 
 const API = "/api";
 const ACTIVE_VEHICLE = "fuellog.activeVehicle";
@@ -13,6 +14,7 @@ const state = {
   entries: [],
   services: [],
   reminders: [],
+  trips: [],
 };
 
 const $ = (id) => document.getElementById(id);
@@ -84,14 +86,16 @@ async function jsonOr(path, key) {
 
 async function loadVehicleData() {
   const id = state.activeVehicleId;
-  const [entries, services, reminders] = await Promise.all([
+  const [entries, services, reminders, trips] = await Promise.all([
     jsonOr(`/fuel?vehicleId=${id}`, "entries"),
     jsonOr(`/service?vehicleId=${id}`, "entries"),
     jsonOr(`/reminders?vehicleId=${id}`, "reminders"),
+    jsonOr(`/trips?vehicleId=${id}`, "trips"),
   ]);
   state.entries = entries; // oldest-first
   state.services = services; // oldest-first
   state.reminders = reminders;
+  state.trips = trips;
   render();
 }
 
@@ -109,8 +113,9 @@ function currentOdometer() {
 
 // ---------- render ----------
 
-const SECTIONS = ["stats", "fuelSection", "reminderSection", "serviceSection"];
+const SECTIONS = ["stats", "fuelSection", "tripSection", "reminderSection", "serviceSection"];
 const REMINDER_LABEL = { ok: "OK", due_soon: "Due soon", overdue: "Overdue" };
+const CATEGORY_LABEL = { personal: "Personal", business: "Business", vacation: "Vacation" };
 
 function renderNoVehicle() {
   SECTIONS.forEach((id) => $(id).classList.add("hidden"));
@@ -130,8 +135,44 @@ function render() {
   $("entryList").innerHTML = rows.map(renderRow).join("");
   $("emptyState").classList.toggle("hidden", rows.length > 0);
 
+  renderTrips();
   renderReminders();
   renderService();
+  populateTripSelectors();
+}
+
+// Fuel + service entries assigned to a trip, reduced to { odometer, cost }.
+function tripItems(tripId) {
+  return [...state.entries, ...state.services]
+    .filter((e) => e.trip_id === tripId)
+    .map((e) => ({ odometer: e.odometer, cost: e.cost }));
+}
+
+function renderTrips() {
+  $("tripEmpty").classList.toggle("hidden", state.trips.length > 0);
+  $("tripList").innerHTML = state.trips
+    .map((t) => {
+      const sum = tripSummary(tripItems(t.id));
+      return `<li class="rounded-xl bg-surface p-3 flex justify-between items-center gap-3 cursor-pointer" data-action="open-trip" data-id="${t.id}">
+        <div class="min-w-0">
+          <div class="font-semibold truncate">${escapeHtml(t.name)}</div>
+          <div class="text-xs text-muted">${CATEGORY_LABEL[t.category] || t.category} · ${sum.count} entries</div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="font-bold tabular-nums">${fmtBDT(sum.totalCost)}</div>
+          <div class="text-xs text-muted tabular-nums">${fmtKm(sum.distance)}</div>
+        </div>
+      </li>`;
+    })
+    .join("");
+}
+
+function populateTripSelectors() {
+  const opts =
+    '<option value="">— No trip —</option>' +
+    state.trips.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
+  $("f_trip").innerHTML = opts;
+  $("s_trip").innerHTML = opts;
 }
 
 function renderReminders() {
@@ -220,6 +261,7 @@ async function submitFuel() {
     cost: Number($("f_cost").value),
     isFull: $("f_isFull").checked,
     location: $("f_location").value.trim() || undefined,
+    tripId: $("f_trip").value ? Number($("f_trip").value) : undefined,
   };
   const res = await api("/fuel", { method: "POST", body: JSON.stringify(body) });
   if (!res.ok) {
@@ -283,6 +325,7 @@ async function submitService() {
     cost: $("s_cost").value ? Number($("s_cost").value) : 0,
     location: $("s_location").value.trim() || undefined,
     notes: $("s_notes").value.trim() || undefined,
+    tripId: $("s_trip").value ? Number($("s_trip").value) : undefined,
   };
   const res = await api("/service", { method: "POST", body: JSON.stringify(body) });
   if (!res.ok) {
@@ -339,6 +382,75 @@ async function deleteReminder(id) {
   else toast("Could not delete");
 }
 
+function openTripDialog() {
+  if (!state.activeVehicleId) {
+    toast("Add a vehicle first");
+    return;
+  }
+  $("tripForm").reset();
+  $("tripDialog").showModal();
+}
+
+async function submitTrip() {
+  const body = {
+    vehicleId: state.activeVehicleId,
+    name: $("t_name").value.trim(),
+    category: $("t_category").value,
+    startDate: $("t_start").value || undefined,
+    endDate: $("t_end").value || undefined,
+  };
+  if (!body.name) {
+    toast("Name is required");
+    return;
+  }
+  const res = await api("/trips", { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) {
+    toast("Could not save trip");
+    return;
+  }
+  $("tripDialog").close();
+  await loadVehicleData();
+  toast("Trip added");
+}
+
+async function deleteTrip(id) {
+  const res = await api(`/trips/${id}`, { method: "DELETE" });
+  if (res.ok) {
+    $("tripDetailDialog").close();
+    await loadVehicleData();
+  } else toast("Could not delete");
+}
+
+function openTripDetail(id) {
+  const trip = state.trips.find((t) => t.id === id);
+  if (!trip) return;
+  const fuel = state.entries.filter((e) => e.trip_id === id);
+  const service = state.services.filter((e) => e.trip_id === id);
+  const sum = tripSummary(tripItems(id));
+
+  const rows = (arr, label) =>
+    arr
+      .map(
+        (e) => `<div class="flex justify-between text-sm py-1 border-t border-border">
+        <span class="truncate">${escapeHtml(label(e))} <span class="text-muted">${e.date}</span></span>
+        <span class="tabular-nums shrink-0">${fmtBDT(e.cost)}</span>
+      </div>`
+      )
+      .join("");
+
+  $("td_title").textContent = trip.name;
+  $("td_body").innerHTML = `
+    <div class="text-sm text-muted mb-1">${CATEGORY_LABEL[trip.category] || trip.category} · ${fmtKm(
+    sum.distance
+  )} · ${fmtBDT(sum.totalCost)}</div>
+    ${fuel.length ? `<div class="text-xs uppercase text-muted mt-3">Fuel</div>${rows(fuel, (e) => e.location || "Fill-up")}` : ""}
+    ${service.length ? `<div class="text-xs uppercase text-muted mt-3">Service</div>${rows(service, (e) => e.type)}` : ""}
+    ${!fuel.length && !service.length ? '<div class="text-muted text-sm mt-2">No entries assigned yet. Pick this trip when logging fuel or service.</div>' : ""}
+    <button id="td_delete" data-id="${id}" class="text-danger text-sm mt-4">Delete trip</button>
+  `;
+  $("tripDetailDialog").showModal();
+}
+
 async function logout() {
   await api("/auth/logout", { method: "POST" });
   location.reload();
@@ -382,6 +494,12 @@ function wire() {
     e.preventDefault();
     submitReminder();
   });
+  $("addTripBtn").addEventListener("click", openTripDialog);
+  $("tripSave").addEventListener("click", (e) => {
+    if (!$("tripForm").reportValidity()) return;
+    e.preventDefault();
+    submitTrip();
+  });
   $("logoutBtn").addEventListener("click", logout);
   $("entryList").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-action='delete']");
@@ -394,6 +512,14 @@ function wire() {
   $("reminderList").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-action='del-reminder']");
     if (btn) deleteReminder(Number(btn.dataset.id));
+  });
+  $("tripList").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-action='open-trip']");
+    if (btn) openTripDetail(Number(btn.dataset.id));
+  });
+  $("tripDetailDialog").addEventListener("click", (e) => {
+    const btn = e.target.closest("#td_delete");
+    if (btn) deleteTrip(Number(btn.dataset.id));
   });
 }
 
