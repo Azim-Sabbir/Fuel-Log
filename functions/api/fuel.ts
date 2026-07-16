@@ -1,4 +1,4 @@
-import { getVehicle, listFuelEntries, createFuelEntry } from "../../lib/db";
+import { getVehicle, listFuelEntries, createFuelEntry, getTrip } from "../../lib/db";
 import { json } from "../../lib/http";
 import { asNumber, asBool, asString, isDateStr } from "../../lib/validate";
 import type { Env, AuthData } from "../../lib/env";
@@ -38,6 +38,11 @@ export const onRequestPost: PagesFunction<Env, string, AuthData> = async (ctx) =
   const vehicle = await getVehicle(ctx.env.DB, ctx.data.userId, vehicleId);
   if (!vehicle) return json({ error: "vehicle_not_found" }, 404);
 
+  const tripId = asNumber(body.tripId);
+  if (tripId !== undefined && !(await getTrip(ctx.env.DB, ctx.data.userId, tripId))) {
+    return json({ error: "trip_not_found" }, 404);
+  }
+
   const entry = await createFuelEntry(ctx.env.DB, ctx.data.userId, {
     vehicleId,
     date: body.date,
@@ -47,6 +52,7 @@ export const onRequestPost: PagesFunction<Env, string, AuthData> = async (ctx) =
     isFull: asBool(body.isFull) ?? true,
     location: asString(body.location) ?? null,
     notes: asString(body.notes) ?? null,
+    tripId: tripId ?? null,
     now: new Date().toISOString(),
   });
   return json({ entry }, 201);
