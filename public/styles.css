@@ -6,9 +6,8 @@
   display: none !important;
 }
 
-/* ---- Dialogs (ID-scoped so preflight can't strip the padding) ---- */
-#fuelDialog,
-#vehicleDialog {
+/* ---- Dialogs (class-scoped so preflight can't strip the padding) ---- */
+.dlg {
   border: 1px solid #2a3355;
   border-radius: 16px;
   background: #151b30;
@@ -17,31 +16,27 @@
   max-width: 24rem;
   padding: 20px;
 }
-#fuelDialog::backdrop,
-#vehicleDialog::backdrop {
+.dlg::backdrop {
   background: rgba(3, 6, 16, 0.6);
 }
-#fuelDialog h3,
-#vehicleDialog h3 {
+.dlg h3 {
   margin: 0 0 12px;
   font-size: 1.1rem;
   font-weight: 700;
 }
-#fuelDialog label,
-#vehicleDialog label {
+.dlg label {
   display: block;
   margin: 10px 0;
   font-size: 0.85rem;
   color: #98a2c8;
 }
-#fuelDialog label.row,
-#vehicleDialog label.row {
+.dlg label.row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-#fuelDialog input,
-#vehicleDialog input {
+.dlg input,
+.dlg select {
   display: block;
   width: 100%;
   margin-top: 4px;
@@ -52,21 +47,25 @@
   color: #e6e9f5;
   font-size: 1rem;
 }
-#fuelDialog label.row input,
-#vehicleDialog label.row input {
+.dlg label.row input {
   width: auto;
   margin-top: 0;
 }
-#fuelDialog menu,
-#vehicleDialog menu {
+.dlg .two {
+  display: flex;
+  gap: 10px;
+}
+.dlg .two label {
+  flex: 1;
+}
+.dlg menu {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   padding: 0;
   margin: 16px 0 0;
 }
-#fuelDialog menu button,
-#vehicleDialog menu button {
+.dlg menu button {
   padding: 9px 16px;
   border-radius: 9px;
   border: none;
@@ -75,10 +74,30 @@
   background: #2a3355;
   color: #e6e9f5;
 }
-#fuelDialog menu button[value="save"],
-#vehicleDialog menu button[value="save"] {
+.dlg menu button[value="save"] {
   background: #3b82f6;
   color: #fff;
+}
+
+/* Reminder status badges */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.badge.ok {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+.badge.due_soon {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+.badge.overdue {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
 }
 
 /* ---- Toast ---- */

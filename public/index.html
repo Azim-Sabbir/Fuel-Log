@@ -96,15 +96,34 @@
         </div>
       </section>
 
-      <section class="px-4">
+      <p id="noVehicle" class="hidden text-center text-muted py-10">
+        Add a vehicle to get started.
+      </p>
+
+      <section id="fuelSection" class="px-4">
         <h2 class="text-xs uppercase tracking-wide text-muted mb-2">Fill-ups</h2>
         <ul id="entryList" class="flex flex-col gap-2"></ul>
-        <p id="emptyState" class="hidden text-center text-muted py-10">
+        <p id="emptyState" class="hidden text-center text-muted py-8">
           No fill-ups yet. Tap ＋ to log one.
         </p>
-        <p id="noVehicle" class="hidden text-center text-muted py-10">
-          Add a vehicle to get started.
-        </p>
+      </section>
+
+      <section id="reminderSection" class="px-4 mt-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs uppercase tracking-wide text-muted">Reminders</h2>
+          <button id="addReminderBtn" class="text-xs text-primary">＋ Add</button>
+        </div>
+        <ul id="reminderList" class="flex flex-col gap-2"></ul>
+        <p id="reminderEmpty" class="hidden text-muted text-sm py-3">No reminders set.</p>
+      </section>
+
+      <section id="serviceSection" class="px-4 mt-6">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs uppercase tracking-wide text-muted">Service</h2>
+          <button id="addServiceBtn" class="text-xs text-accent">＋ Add</button>
+        </div>
+        <ul id="serviceList" class="flex flex-col gap-2"></ul>
+        <p id="serviceEmpty" class="hidden text-muted text-sm py-3">No service logged.</p>
       </section>
 
       <button
@@ -117,7 +136,7 @@
     </main>
 
     <!-- Fuel dialog -->
-    <dialog id="fuelDialog">
+    <dialog id="fuelDialog" class="dlg">
       <form id="fuelForm" method="dialog">
         <h3 id="fuelDialogTitle">Log fill-up</h3>
         <label>Date<input type="date" id="f_date" required /></label>
@@ -134,7 +153,7 @@
     </dialog>
 
     <!-- Vehicle dialog -->
-    <dialog id="vehicleDialog">
+    <dialog id="vehicleDialog" class="dlg">
       <form id="vehicleForm" method="dialog">
         <h3>Add vehicle</h3>
         <label>Name<input type="text" id="v_name" required placeholder="e.g. My Corolla" /></label>
@@ -145,6 +164,43 @@
         <menu>
           <button value="cancel" type="button" data-close>Cancel</button>
           <button value="save" id="vehicleSave">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Service dialog -->
+    <dialog id="serviceDialog" class="dlg">
+      <form id="serviceForm" method="dialog">
+        <h3>Log service</h3>
+        <label>Date<input type="date" id="s_date" required /></label>
+        <label>Odometer (km)<input type="number" id="s_odometer" step="0.1" min="0" required /></label>
+        <label>Type<input type="text" id="s_type" required placeholder="e.g. Oil change" /></label>
+        <label>Cost (৳)<input type="number" id="s_cost" step="0.01" min="0" /></label>
+        <label>Location<input type="text" id="s_location" /></label>
+        <label>Notes<input type="text" id="s_notes" /></label>
+        <menu>
+          <button value="cancel" type="button" data-close>Cancel</button>
+          <button value="save" id="serviceSave">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Reminder dialog -->
+    <dialog id="reminderDialog" class="dlg">
+      <form id="reminderForm" method="dialog">
+        <h3>Add reminder</h3>
+        <label>Type<input type="text" id="r_type" required placeholder="e.g. Oil change" /></label>
+        <div class="two">
+          <label>Every (km)<input type="number" id="r_intervalKm" step="1" min="0" /></label>
+          <label>Every (days)<input type="number" id="r_intervalDays" step="1" min="0" /></label>
+        </div>
+        <div class="two">
+          <label>Last done odo (km)<input type="number" id="r_lastOdo" step="0.1" min="0" /></label>
+          <label>Last done date<input type="date" id="r_lastDate" /></label>
+        </div>
+        <menu>
+          <button value="cancel" type="button" data-close>Cancel</button>
+          <button value="save" id="reminderSave">Save</button>
         </menu>
       </form>
     </dialog>
