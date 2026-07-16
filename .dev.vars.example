@@ -1,3 +1,7 @@
-# Copy to .dev.vars locally (.dev.vars is gitignored). App-specific secrets get
-# added here as the feature set is defined.
-ACCESS_KEY=generate-with-openssl-rand-hex-32
+# Copy to .dev.vars locally (.dev.vars is gitignored).
+# Create a Google OAuth 2.0 "Web application" client in the Google Cloud Console
+# and add http://localhost:8788/api/auth/google/callback as an authorized redirect URI.
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxxxxxxx
+# App base URL, no trailing slash. Also set as a [vars] entry in wrangler.toml.
+APP_URL=http://localhost:8788

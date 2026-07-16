@@ -1,0 +1,97 @@
+/* Custom bits Tailwind utilities can't express, plus a few ID-scoped dialog rules
+   that must outrank Tailwind's runtime-injected preflight reset. */
+
+/* Force display:none to win regardless of any co-present `flex`/`grid` utility. */
+.hidden {
+  display: none !important;
+}
+
+/* ---- Dialogs (ID-scoped so preflight can't strip the padding) ---- */
+#fuelDialog,
+#vehicleDialog {
+  border: 1px solid #2a3355;
+  border-radius: 16px;
+  background: #151b30;
+  color: #e6e9f5;
+  width: 92%;
+  max-width: 24rem;
+  padding: 20px;
+}
+#fuelDialog::backdrop,
+#vehicleDialog::backdrop {
+  background: rgba(3, 6, 16, 0.6);
+}
+#fuelDialog h3,
+#vehicleDialog h3 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+#fuelDialog label,
+#vehicleDialog label {
+  display: block;
+  margin: 10px 0;
+  font-size: 0.85rem;
+  color: #98a2c8;
+}
+#fuelDialog label.row,
+#vehicleDialog label.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#fuelDialog input,
+#vehicleDialog input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  border: 1px solid #2a3355;
+  background: #0b1020;
+  color: #e6e9f5;
+  font-size: 1rem;
+}
+#fuelDialog label.row input,
+#vehicleDialog label.row input {
+  width: auto;
+  margin-top: 0;
+}
+#fuelDialog menu,
+#vehicleDialog menu {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0;
+  margin: 16px 0 0;
+}
+#fuelDialog menu button,
+#vehicleDialog menu button {
+  padding: 9px 16px;
+  border-radius: 9px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: #2a3355;
+  color: #e6e9f5;
+}
+#fuelDialog menu button[value="save"],
+#vehicleDialog menu button[value="save"] {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* ---- Toast ---- */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 90px;
+  transform: translateX(-50%);
+  background: #2a3355;
+  color: #e6e9f5;
+  padding: 10px 16px;
+  border-radius: 10px;
+  max-width: 90%;
+  text-align: center;
+  z-index: 50;
+}

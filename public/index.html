@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Fuel Log</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0b1020" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Fuel Log" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              bg: "#0b1020",
+              surface: "#151b30",
+              surface2: "#1d2540",
+              border: "#2a3355",
+              text: "#e6e9f5",
+              muted: "#98a2c8",
+              primary: "#3b82f6",
+              accent: "#f59e0b",
+              good: "#22c55e",
+              danger: "#ef4444",
+            },
+            fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body
+    class="bg-bg text-text font-sans min-h-screen md:max-w-md md:mx-auto md:border-x md:border-border"
+  >
+    <!-- Login -->
+    <section
+      id="loginView"
+      class="hidden min-h-screen flex flex-col items-center justify-center gap-6 p-8 text-center"
+    >
+      <div class="text-6xl">⛽</div>
+      <div>
+        <h1 class="text-2xl font-bold">Fuel Log</h1>
+        <p class="text-muted mt-1">Track fuel, mileage, service &amp; trips.</p>
+      </div>
+      <a
+        href="/api/auth/google/start"
+        class="inline-flex items-center gap-3 rounded-xl bg-white text-slate-800 px-5 py-3 font-semibold shadow"
+      >
+        Continue with Google
+      </a>
+    </section>
+
+    <!-- App -->
+    <main id="appView" class="hidden pb-28">
+      <header class="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-xl">⛽</span>
+          <select
+            id="vehicleSelect"
+            class="bg-surface border border-border rounded-lg px-2 py-1 text-sm max-w-[9rem] truncate"
+          ></select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="addVehicleBtn" class="rounded-lg bg-surface border border-border px-2 py-1 text-sm">
+            ＋ Vehicle
+          </button>
+          <button id="logoutBtn" class="rounded-lg bg-surface border border-border px-2 py-1 text-sm">
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <section id="stats" class="grid grid-cols-3 gap-2 p-4">
+        <div class="rounded-xl bg-surface p-3 text-center">
+          <div id="statDistance" class="text-lg font-bold tabular-nums">—</div>
+          <div class="text-xs text-muted">distance</div>
+        </div>
+        <div class="rounded-xl bg-surface p-3 text-center">
+          <div id="statEconomy" class="text-lg font-bold tabular-nums">—</div>
+          <div class="text-xs text-muted">avg km/L</div>
+        </div>
+        <div class="rounded-xl bg-surface p-3 text-center">
+          <div id="statCost" class="text-lg font-bold tabular-nums">—</div>
+          <div class="text-xs text-muted">total cost</div>
+        </div>
+      </section>
+
+      <section class="px-4">
+        <h2 class="text-xs uppercase tracking-wide text-muted mb-2">Fill-ups</h2>
+        <ul id="entryList" class="flex flex-col gap-2"></ul>
+        <p id="emptyState" class="hidden text-center text-muted py-10">
+          No fill-ups yet. Tap ＋ to log one.
+        </p>
+        <p id="noVehicle" class="hidden text-center text-muted py-10">
+          Add a vehicle to get started.
+        </p>
+      </section>
+
+      <button
+        id="addFuelBtn"
+        class="fixed bottom-6 right-6 md:right-[calc(50%-13rem)] h-14 w-14 rounded-full bg-primary text-white text-3xl leading-none shadow-lg"
+        aria-label="Log fill-up"
+      >
+        ＋
+      </button>
+    </main>
+
+    <!-- Fuel dialog -->
+    <dialog id="fuelDialog">
+      <form id="fuelForm" method="dialog">
+        <h3 id="fuelDialogTitle">Log fill-up</h3>
+        <label>Date<input type="date" id="f_date" required /></label>
+        <label>Odometer (km)<input type="number" id="f_odometer" step="0.1" min="0" required /></label>
+        <label>Volume (L)<input type="number" id="f_volume" step="0.01" min="0.01" required /></label>
+        <label>Cost (৳)<input type="number" id="f_cost" step="0.01" min="0" required /></label>
+        <label>Location<input type="text" id="f_location" placeholder="e.g. Padma, Mirpur" /></label>
+        <label class="row"><input type="checkbox" id="f_isFull" checked /> Full tank</label>
+        <menu>
+          <button value="cancel" type="button" data-close>Cancel</button>
+          <button value="save" id="fuelSave">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <!-- Vehicle dialog -->
+    <dialog id="vehicleDialog">
+      <form id="vehicleForm" method="dialog">
+        <h3>Add vehicle</h3>
+        <label>Name<input type="text" id="v_name" required placeholder="e.g. My Corolla" /></label>
+        <label>Make<input type="text" id="v_make" /></label>
+        <label>Model<input type="text" id="v_model" /></label>
+        <label>Year<input type="number" id="v_year" min="1900" max="2100" /></label>
+        <label>Starting odometer (km)<input type="number" id="v_odometer" step="0.1" min="0" /></label>
+        <menu>
+          <button value="cancel" type="button" data-close>Cancel</button>
+          <button value="save" id="vehicleSave">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <p id="toast" class="hidden"></p>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

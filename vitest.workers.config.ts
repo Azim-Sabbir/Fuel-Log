@@ -10,8 +10,11 @@ export default defineWorkersConfig({
           compatibilityFlags: ["nodejs_compat"],
           d1Databases: ["DB"],
           kvNamespaces: ["SETTINGS"],
+          r2Buckets: ["RECEIPTS"],
           bindings: {
-            ACCESS_KEY: "test-access-key",
+            GOOGLE_CLIENT_ID: "test-client-id.apps.googleusercontent.com",
+            GOOGLE_CLIENT_SECRET: "test-client-secret",
+            APP_URL: "http://localhost:8788",
           },
         },
       },
