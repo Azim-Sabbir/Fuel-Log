@@ -209,13 +209,14 @@ export async function createFuelEntry(
     isFull?: boolean;
     location?: string | null;
     notes?: string | null;
+    tripId?: number | null;
     now: string;
   }
 ): Promise<FuelEntry> {
   const row = await db
     .prepare(
-      `INSERT INTO fuel_entries (user_id, vehicle_id, date, odometer, volume, cost, is_full, location, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO fuel_entries (user_id, vehicle_id, date, odometer, volume, cost, is_full, location, notes, trip_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       userId,
@@ -227,6 +228,7 @@ export async function createFuelEntry(
       e.isFull === false ? 0 : 1,
       e.location ?? null,
       e.notes ?? null,
+      e.tripId ?? null,
       e.now
     )
     .first<FuelEntry>();
@@ -321,15 +323,27 @@ export async function createServiceEntry(
     cost?: number;
     location?: string | null;
     notes?: string | null;
+    tripId?: number | null;
     now: string;
   }
 ): Promise<ServiceEntry> {
   const row = await db
     .prepare(
-      `INSERT INTO service_entries (user_id, vehicle_id, date, odometer, type, cost, location, notes, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO service_entries (user_id, vehicle_id, date, odometer, type, cost, location, notes, trip_id, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
-    .bind(userId, e.vehicleId, e.date, e.odometer, e.type, e.cost ?? 0, e.location ?? null, e.notes ?? null, e.now)
+    .bind(
+      userId,
+      e.vehicleId,
+      e.date,
+      e.odometer,
+      e.type,
+      e.cost ?? 0,
+      e.location ?? null,
+      e.notes ?? null,
+      e.tripId ?? null,
+      e.now
+    )
     .first<ServiceEntry>();
   return row!;
 }
@@ -487,4 +501,110 @@ export async function updateReminder(
 export async function deleteReminder(db: D1Database, userId: number, id: number): Promise<number> {
   const res = await db.prepare(`DELETE FROM reminders WHERE id = ? AND user_id = ?`).bind(id, userId).run();
   return res.meta.changes ?? 0;
+}
+
+// ---------- trips ----------
+
+export interface Trip {
+  id: number;
+  user_id: number;
+  vehicle_id: number;
+  name: string;
+  category: string;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+}
+
+export async function createTrip(
+  db: D1Database,
+  userId: number,
+  t: {
+    vehicleId: number;
+    name: string;
+    category?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    now: string;
+  }
+): Promise<Trip> {
+  const row = await db
+    .prepare(
+      `INSERT INTO trips (user_id, vehicle_id, name, category, start_date, end_date, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *`
+    )
+    .bind(userId, t.vehicleId, t.name, t.category ?? "personal", t.startDate ?? null, t.endDate ?? null, t.now)
+    .first<Trip>();
+  return row!;
+}
+
+export async function listTrips(db: D1Database, userId: number, vehicleId: number): Promise<Trip[]> {
+  const res = await db
+    .prepare(`SELECT * FROM trips WHERE user_id = ? AND vehicle_id = ? ORDER BY id DESC`)
+    .bind(userId, vehicleId)
+    .all<Trip>();
+  return res.results ?? [];
+}
+
+export async function getTrip(db: D1Database, userId: number, id: number): Promise<Trip | null> {
+  return await db.prepare(`SELECT * FROM trips WHERE id = ? AND user_id = ?`).bind(id, userId).first<Trip>();
+}
+
+export async function updateTrip(
+  db: D1Database,
+  userId: number,
+  id: number,
+  f: { name?: string; category?: string; startDate?: string; endDate?: string }
+): Promise<Trip | null> {
+  return await db
+    .prepare(
+      `UPDATE trips SET
+         name = COALESCE(?, name),
+         category = COALESCE(?, category),
+         start_date = COALESCE(?, start_date),
+         end_date = COALESCE(?, end_date)
+       WHERE id = ? AND user_id = ? RETURNING *`
+    )
+    .bind(f.name ?? null, f.category ?? null, f.startDate ?? null, f.endDate ?? null, id, userId)
+    .first<Trip>();
+}
+
+/** Delete a trip, unassigning (not deleting) its entries. Returns 1 if deleted. */
+export async function deleteTrip(db: D1Database, userId: number, id: number): Promise<number> {
+  for (const table of ["fuel_entries", "service_entries"]) {
+    await db
+      .prepare(`UPDATE ${table} SET trip_id = NULL WHERE trip_id = ? AND user_id = ?`)
+      .bind(id, userId)
+      .run();
+  }
+  const res = await db.prepare(`DELETE FROM trips WHERE id = ? AND user_id = ?`).bind(id, userId).run();
+  return res.meta.changes ?? 0;
+}
+
+export async function listFuelEntriesByTrip(
+  db: D1Database,
+  userId: number,
+  tripId: number
+): Promise<FuelEntry[]> {
+  const res = await db
+    .prepare(
+      `SELECT * FROM fuel_entries WHERE user_id = ? AND trip_id = ? ORDER BY date ASC, odometer ASC, id ASC`
+    )
+    .bind(userId, tripId)
+    .all<FuelEntry>();
+  return res.results ?? [];
+}
+
+export async function listServiceEntriesByTrip(
+  db: D1Database,
+  userId: number,
+  tripId: number
+): Promise<ServiceEntry[]> {
+  const res = await db
+    .prepare(
+      `SELECT * FROM service_entries WHERE user_id = ? AND trip_id = ? ORDER BY date ASC, odometer ASC, id ASC`
+    )
+    .bind(userId, tripId)
+    .all<ServiceEntry>();
+  return res.results ?? [];
 }
