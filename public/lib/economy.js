@@ -9,6 +9,14 @@
 // including the second (so intervening partial fills are accumulated, not each
 // treated as its own — which would distort the numbers).
 
+// Accepts both the camelCase `isFull` boolean and the DB `is_full` (0/1) shape.
+// An entry with neither flag defaults to a full tank.
+function isFullTank(e) {
+  if (typeof e.isFull === "boolean") return e.isFull;
+  if (e.is_full != null) return e.is_full === 1;
+  return true;
+}
+
 /** cost / volume, or null when volume is zero/absent. */
 export function pricePerLiter(entry) {
   if (!entry || !entry.volume) return null;
@@ -30,7 +38,7 @@ export function computeEntries(entries) {
     const tripDistance = prevOdometer === null ? null : e.odometer - prevOdometer;
     let kmPerL = null;
 
-    if (e.isFull) {
+    if (isFullTank(e)) {
       if (lastFullOdometer !== null) {
         const segmentDistance = e.odometer - lastFullOdometer;
         const segmentLiters = litersSinceLastFull + e.volume;
@@ -76,7 +84,7 @@ export function summarize(entries) {
     totalLiters += e.volume;
     totalCost += e.cost;
 
-    if (e.isFull) {
+    if (isFullTank(e)) {
       if (lastFullOdometer !== null) {
         measuredDistance += e.odometer - lastFullOdometer;
         measuredLiters += litersSinceLastFull + e.volume;

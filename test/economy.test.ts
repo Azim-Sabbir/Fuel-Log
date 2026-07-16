@@ -80,6 +80,39 @@ describe("summarize", () => {
   });
 });
 
+// The API/DB shape uses `is_full` (0/1), not the camelCase `isFull` boolean used
+// above. The economy functions must accept the real row shape too.
+describe("DB-shaped rows (is_full 0/1)", () => {
+  const rows = [
+    { date: "2026-06-01", odometer: 50000, volume: 35, cost: 3500, is_full: 1 },
+    { date: "2026-06-20", odometer: 50450, volume: 30, cost: 3300, is_full: 1 },
+    { date: "2026-07-05", odometer: 50900, volume: 31, cost: 3410, is_full: 1 },
+  ];
+
+  it("computes per-entry km/L from is_full flags", () => {
+    const out = computeEntries(rows);
+    expect(out[0].kmPerL).toBeNull();
+    expect(out[1].kmPerL).toBe(15); // 450 / 30
+    expect(out[2].kmPerL).toBeCloseTo(450 / 31, 5);
+  });
+
+  it("summarize measures economy from is_full rows", () => {
+    const s = summarize(rows);
+    expect(s.totalDistance).toBe(900);
+    expect(s.totalCost).toBe(10210);
+    expect(s.avgKmPerL).toBeCloseTo(900 / 61, 5); // (450+450) / (30+31)
+  });
+
+  it("treats is_full=0 as a partial fill (accumulates volume)", () => {
+    const partial = [
+      { odometer: 0, volume: 30, cost: 1, is_full: 1 },
+      { odometer: 300, volume: 10, cost: 1, is_full: 0 },
+      { odometer: 600, volume: 50, cost: 1, is_full: 1 },
+    ];
+    expect(computeEntries(partial)[2].kmPerL).toBe(10); // 600 / (10+50)
+  });
+});
+
 describe("tripCostEstimate", () => {
   it("estimates fuel cost from distance, economy, and price", () => {
     expect(tripCostEstimate({ distance: 450, kmPerL: 15, pricePerL: 100 })).toBe(3000);
