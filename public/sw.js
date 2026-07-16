@@ -1,6 +1,6 @@
 // Network-first for the app shell so deploys show up immediately; API calls
 // bypass the cache entirely.
-const CACHE = "fuellog-v4";
+const CACHE = "fuellog-v5";
 const SHELL = [
   "/",
   "/index.html",

@@ -163,6 +163,16 @@
           <button data-range="all" class="range-pill">All</button>
         </div>
 
+        <div id="dataTools" class="flex gap-2">
+          <button id="exportBtn" class="rounded-lg bg-surface border border-border px-3 py-2 text-sm">
+            Export CSV
+          </button>
+          <button id="importBtn" class="rounded-lg bg-surface border border-border px-3 py-2 text-sm">
+            Import CSV
+          </button>
+          <input type="file" id="importFile" accept=".csv,text/csv" class="hidden" />
+        </div>
+
         <div class="grid grid-cols-2 gap-2" id="reportSummary"></div>
 
         <div>
@@ -210,6 +220,7 @@
         <label>Location<input type="text" id="f_location" placeholder="e.g. Padma, Mirpur" /></label>
         <label>Trip (optional)<select id="f_trip"></select></label>
         <label class="row"><input type="checkbox" id="f_isFull" checked /> Full tank</label>
+        <label>Receipt (optional)<input type="file" id="f_receipt" accept="image/*" /></label>
         <menu>
           <button value="cancel" type="button" data-close>Cancel</button>
           <button value="save" id="fuelSave">Save</button>
@@ -244,6 +255,7 @@
         <label>Location<input type="text" id="s_location" /></label>
         <label>Notes<input type="text" id="s_notes" /></label>
         <label>Trip (optional)<select id="s_trip"></select></label>
+        <label>Receipt (optional)<input type="file" id="s_receipt" accept="image/*" /></label>
         <menu>
           <button value="cancel" type="button" data-close>Cancel</button>
           <button value="save" id="serviceSave">Save</button>
