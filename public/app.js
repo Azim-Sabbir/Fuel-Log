@@ -29,6 +29,20 @@ async function api(path, opts = {}) {
   });
 }
 
+// Upload a raw image File to /api/receipts. The shared api() wrapper forces a
+// JSON content-type, so this posts via fetch directly with the file's MIME type.
+// Returns the storage key on success, or null on failure.
+async function uploadReceipt(file) {
+  const res = await fetch(API + "/receipts", {
+    method: "POST",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!res.ok) return null;
+  const { key } = await res.json();
+  return key;
+}
+
 function toast(msg) {
   const t = $("toast");
   t.textContent = msg;
@@ -310,6 +324,10 @@ function renderService() {
         <div class="font-semibold truncate">${escapeHtml(s.type)}</div>
         <div class="text-xs text-muted">${s.date} · ${fmtKm(s.odometer)}${
         s.location ? " · " + escapeHtml(s.location) : ""
+      }${
+        s.receipt_key
+          ? ` · <a href="/api/receipts/${s.receipt_key}" target="_blank" rel="noopener">📎</a>`
+          : ""
       }</div>
       </div>
       <div class="text-right shrink-0">
@@ -328,7 +346,11 @@ function renderRow(e) {
   return `<li class="rounded-xl bg-surface p-3 flex justify-between items-start gap-3" data-id="${e.id}">
     <div class="min-w-0">
       <div class="font-semibold truncate">${escapeHtml(e.location || "Fill-up")}</div>
-      <div class="text-xs text-muted">${e.date} · ${fmtKm(e.odometer)}${e.is_full ? "" : " · partial"}</div>
+      <div class="text-xs text-muted">${e.date} · ${fmtKm(e.odometer)}${e.is_full ? "" : " · partial"}${
+    e.receipt_key
+      ? ` · <a href="/api/receipts/${e.receipt_key}" target="_blank" rel="noopener">📎</a>`
+      : ""
+  }</div>
     </div>
     <div class="text-right shrink-0">
       <div class="font-bold tabular-nums">${fmtBDT(e.cost)}</div>
@@ -362,6 +384,15 @@ async function submitFuel() {
     location: $("f_location").value.trim() || undefined,
     tripId: $("f_trip").value ? Number($("f_trip").value) : undefined,
   };
+  const file = $("f_receipt").files[0];
+  if (file) {
+    const key = await uploadReceipt(file);
+    if (!key) {
+      toast("Could not upload receipt");
+      return;
+    }
+    body.receiptKey = key;
+  }
   const res = await api("/fuel", { method: "POST", body: JSON.stringify(body) });
   if (!res.ok) {
     toast("Could not save fill-up");
@@ -426,6 +457,15 @@ async function submitService() {
     notes: $("s_notes").value.trim() || undefined,
     tripId: $("s_trip").value ? Number($("s_trip").value) : undefined,
   };
+  const file = $("s_receipt").files[0];
+  if (file) {
+    const key = await uploadReceipt(file);
+    if (!key) {
+      toast("Could not upload receipt");
+      return;
+    }
+    body.receiptKey = key;
+  }
   const res = await api("/service", { method: "POST", body: JSON.stringify(body) });
   if (!res.ok) {
     toast("Could not save service");
@@ -550,6 +590,34 @@ function openTripDetail(id) {
   $("tripDetailDialog").showModal();
 }
 
+function exportCsv() {
+  if (!state.activeVehicleId) {
+    toast("Add a vehicle first");
+    return;
+  }
+  window.location.href = `${API}/export?vehicleId=${state.activeVehicleId}`;
+}
+
+async function importCsv(file) {
+  if (!state.activeVehicleId) {
+    toast("Add a vehicle first");
+    return;
+  }
+  const text = await file.text();
+  const res = await fetch(`${API}/import?vehicleId=${state.activeVehicleId}`, {
+    method: "POST",
+    headers: { "Content-Type": "text/csv" },
+    body: text,
+  });
+  if (!res.ok) {
+    toast("Could not import CSV");
+    return;
+  }
+  const { imported, skipped } = await res.json();
+  await loadVehicleData();
+  toast(`Imported ${imported}, skipped ${skipped}`);
+}
+
 async function logout() {
   await api("/auth/logout", { method: "POST" });
   location.reload();
@@ -630,6 +698,13 @@ function wire() {
   });
   $("calc_distance").addEventListener("input", computeCalc);
   $("calc_price").addEventListener("input", computeCalc);
+  $("exportBtn").addEventListener("click", exportCsv);
+  $("importBtn").addEventListener("click", () => $("importFile").click());
+  $("importFile").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) importCsv(file);
+    e.target.value = "";
+  });
 }
 
 function registerSW() {
