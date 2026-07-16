@@ -1,0 +1,28 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      # Quality gate — a failing suite blocks the deploy.
+      - run: npm run typecheck
+      - run: npm test
+      # Deploys public/ + functions/ using the bindings in wrangler.toml.
+      # Secrets (GOOGLE_CLIENT_ID/SECRET) are managed with `wrangler pages secret put`;
+      # schema changes are applied separately with `npm run db:remote`.
+      - name: Deploy
+        run: npx wrangler pages deploy public --project-name fuel-log
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
