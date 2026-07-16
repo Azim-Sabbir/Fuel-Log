@@ -7,16 +7,16 @@ compatibility_flags = ["nodejs_compat"]
 # Production base URL used to build the Google OAuth redirect URI (no trailing
 # slash). Local dev overrides this via .dev.vars. Secrets (Google client id/
 # secret) are set with `wrangler pages secret put`, never here.
-APP_URL = "https://fuel-log.pages.dev"
+APP_URL = "https://fuel-log-emg.pages.dev"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "fuel-log-db"
-database_id = "dc17112f-d5c5-4a95-82d8-8a0fff048d84"
+database_id = "9977ac28-ceef-4da0-8111-38e11e5f4ce1"
 
 [[kv_namespaces]]
 binding = "SETTINGS"
-id = "33809ab434194ccb8c3842c0db07056a"
+id = "b36e07ff5a9445fabcee1eaf851d4e9e"
 
 [[r2_buckets]]
 binding = "RECEIPTS"
