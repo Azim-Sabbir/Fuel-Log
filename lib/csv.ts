@@ -1,8 +1,8 @@
-// Minimal CSV encode/decode. Pure ES module (browser + Vitest). Handles quoted
+// Minimal CSV encode/decode used by the export/import endpoints. Handles quoted
 // fields, embedded commas/quotes/newlines, and CRLF.
 
-export function toCSV(rows, columns) {
-  const esc = (v) => {
+export function toCSV(rows: Record<string, unknown>[], columns: string[]): string {
+  const esc = (v: unknown) => {
     const s = v == null ? "" : String(v);
     return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   };
@@ -11,20 +11,20 @@ export function toCSV(rows, columns) {
   return lines.join("\n");
 }
 
-export function parseCSV(text) {
+export function parseCSV(text: string): Record<string, string>[] {
   const rows = parseRows(text);
   if (rows.length === 0) return [];
   const headers = rows[0];
   return rows.slice(1).map((cells) => {
-    const obj = {};
+    const obj: Record<string, string> = {};
     headers.forEach((h, i) => (obj[h] = cells[i] ?? ""));
     return obj;
   });
 }
 
-function parseRows(text) {
-  const rows = [];
-  let row = [];
+function parseRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
   let field = "";
   let inQuotes = false;
 
@@ -59,6 +59,5 @@ function parseRows(text) {
     row.push(field);
     rows.push(row);
   }
-  // Drop fully-empty rows (e.g. from a trailing newline).
   return rows.filter((r) => r.length > 1 || r[0] !== "");
 }

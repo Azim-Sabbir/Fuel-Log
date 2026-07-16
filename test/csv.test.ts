@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toCSV, parseCSV } from "../public/lib/csv.js";
+import { toCSV, parseCSV } from "../lib/csv";
 
 describe("toCSV", () => {
   it("writes a header row and quotes fields with commas/quotes", () => {
