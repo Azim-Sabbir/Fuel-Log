@@ -9,6 +9,7 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:int": "vitest run --config vitest.workers.config.ts",
     "test": "npm run test:unit && npm run test:int",
+    "icons": "node scripts/gen-icons.mjs",
     "deploy": "wrangler pages deploy public --project-name fuel-log",
     "db:local": "wrangler d1 migrations apply fuel-log-db --local",
     "db:remote": "wrangler d1 migrations apply fuel-log-db --remote"
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.7.1",
     "@cloudflare/workers-types": "^4.20250101.0",
+    "sharp": "^0.33.5",
     "typescript": "^5.6.0",
     "vitest": "~2.1.0",
     "wrangler": "^3.90.0"

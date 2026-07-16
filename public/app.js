@@ -288,13 +288,21 @@ function computeCalc() {
   $("calc_note").textContent = `at ${fmtKmPerL(kmPerL)}`;
 }
 
+function reminderThresholds() {
+  return {
+    km: Number(localStorage.getItem("fuellog.remKm")) || 500,
+    days: Number(localStorage.getItem("fuellog.remDays")) || 14,
+  };
+}
+
 function renderReminders() {
   const odo = currentOdometer();
   const today = dhakaToday(new Date());
+  const thresholds = reminderThresholds();
   $("reminderEmpty").classList.toggle("hidden", state.reminders.length > 0);
   $("reminderList").innerHTML = state.reminders
     .map((r) => {
-      const st = reminderStatus(r, { odometer: odo, date: today });
+      const st = reminderStatus(r, { odometer: odo, date: today }, thresholds);
       const detail = [];
       if (st.remainingKm != null)
         detail.push(st.remainingKm < 0 ? `${fmtKm(-st.remainingKm)} over` : `${fmtKm(st.remainingKm)} left`);
@@ -618,6 +626,26 @@ async function importCsv(file) {
   toast(`Imported ${imported}, skipped ${skipped}`);
 }
 
+function openSettings() {
+  const t = reminderThresholds();
+  $("set_remKm").value = t.km;
+  $("set_remDays").value = t.days;
+  $("settingsDialog").showModal();
+}
+
+function saveSettings() {
+  localStorage.setItem("fuellog.remKm", String(Number($("set_remKm").value) || 500));
+  localStorage.setItem("fuellog.remDays", String(Number($("set_remDays").value) || 14));
+  $("settingsDialog").close();
+  if (state.activeVehicleId) render();
+  toast("Settings saved");
+}
+
+function openAbout() {
+  $("settingsDialog").close();
+  $("aboutDialog").showModal();
+}
+
 async function logout() {
   await api("/auth/logout", { method: "POST" });
   location.reload();
@@ -705,6 +733,12 @@ function wire() {
     if (file) importCsv(file);
     e.target.value = "";
   });
+  $("settingsBtn").addEventListener("click", openSettings);
+  $("settingsSave").addEventListener("click", (e) => {
+    e.preventDefault();
+    saveSettings();
+  });
+  $("aboutBtn").addEventListener("click", openAbout);
 }
 
 function registerSW() {
