@@ -3,8 +3,16 @@ pages_build_output_dir = "public"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare resource ids are filled in after the D1 database and KV namespace
-# are created (`wrangler d1 create fuel-log-db`, `wrangler kv namespace create SETTINGS`).
+[vars]
+# Public base URL used to build the Google OAuth redirect URI (no trailing slash).
+# Local dev default; override per environment. Secrets (client id/secret) live in
+# .dev.vars locally and `wrangler pages secret put` in production — never here.
+APP_URL = "http://localhost:8788"
+
+# Cloudflare resource ids are filled in after the resources are created:
+#   wrangler d1 create fuel-log-db
+#   wrangler kv namespace create SETTINGS
+#   wrangler r2 bucket create fuel-log-receipts
 [[d1_databases]]
 binding = "DB"
 database_name = "fuel-log-db"
@@ -13,3 +21,7 @@ database_id = "REPLACE_AFTER_D1_CREATE"
 [[kv_namespaces]]
 binding = "SETTINGS"
 id = "REPLACE_AFTER_KV_CREATE"
+
+[[r2_buckets]]
+binding = "RECEIPTS"
+bucket_name = "fuel-log-receipts"
