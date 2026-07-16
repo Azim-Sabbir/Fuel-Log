@@ -71,7 +71,7 @@
     </section>
 
     <!-- App -->
-    <main id="appView" class="hidden pb-28">
+    <main id="appView" class="hidden pb-12">
       <header
         class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-border bg-bg/80 backdrop-blur"
       >
@@ -115,10 +115,16 @@
       </p>
 
       <section id="fuelSection" class="px-4">
+        <button
+          id="addFuelBtn"
+          class="w-full mb-4 rounded-xl bg-primary text-white font-semibold py-3.5 shadow-lg shadow-primary/20 active:scale-[0.99] transition-transform flex items-center justify-center gap-2"
+        >
+          <span class="text-lg leading-none">⛽</span> Log fill-up
+        </button>
         <h2 class="text-xs uppercase tracking-wide text-muted mb-2">Fill-ups</h2>
         <ul id="entryList" class="flex flex-col gap-2"></ul>
         <p id="emptyState" class="hidden text-center text-muted py-8">
-          No fill-ups yet. Tap ＋ to log one.
+          No fill-ups yet — log your first one above.
         </p>
       </section>
 
@@ -148,14 +154,6 @@
         <ul id="serviceList" class="flex flex-col gap-2"></ul>
         <p id="serviceEmpty" class="hidden text-muted text-sm py-3">No service logged.</p>
       </section>
-
-      <button
-        id="addFuelBtn"
-        class="fixed bottom-6 right-6 md:right-[calc(50%-13rem)] h-14 w-14 rounded-full bg-primary text-white text-3xl leading-none shadow-lg"
-        aria-label="Log fill-up"
-      >
-        ＋
-      </button>
     </main>
 
     <!-- Reports -->
