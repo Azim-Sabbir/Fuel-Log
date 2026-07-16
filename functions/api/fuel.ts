@@ -53,6 +53,7 @@ export const onRequestPost: PagesFunction<Env, string, AuthData> = async (ctx) =
     location: asString(body.location) ?? null,
     notes: asString(body.notes) ?? null,
     tripId: tripId ?? null,
+    receiptKey: asString(body.receiptKey) ?? null,
     now: new Date().toISOString(),
   });
   return json({ entry }, 201);

@@ -210,13 +210,14 @@ export async function createFuelEntry(
     location?: string | null;
     notes?: string | null;
     tripId?: number | null;
+    receiptKey?: string | null;
     now: string;
   }
 ): Promise<FuelEntry> {
   const row = await db
     .prepare(
-      `INSERT INTO fuel_entries (user_id, vehicle_id, date, odometer, volume, cost, is_full, location, notes, trip_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO fuel_entries (user_id, vehicle_id, date, odometer, volume, cost, is_full, location, notes, trip_id, receipt_key, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       userId,
@@ -229,6 +230,7 @@ export async function createFuelEntry(
       e.location ?? null,
       e.notes ?? null,
       e.tripId ?? null,
+      e.receiptKey ?? null,
       e.now
     )
     .first<FuelEntry>();
@@ -324,13 +326,14 @@ export async function createServiceEntry(
     location?: string | null;
     notes?: string | null;
     tripId?: number | null;
+    receiptKey?: string | null;
     now: string;
   }
 ): Promise<ServiceEntry> {
   const row = await db
     .prepare(
-      `INSERT INTO service_entries (user_id, vehicle_id, date, odometer, type, cost, location, notes, trip_id, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+      `INSERT INTO service_entries (user_id, vehicle_id, date, odometer, type, cost, location, notes, trip_id, receipt_key, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
     )
     .bind(
       userId,
@@ -342,6 +345,7 @@ export async function createServiceEntry(
       e.location ?? null,
       e.notes ?? null,
       e.tripId ?? null,
+      e.receiptKey ?? null,
       e.now
     )
     .first<ServiceEntry>();

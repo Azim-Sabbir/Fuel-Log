@@ -5,6 +5,11 @@ export default defineWorkersConfig({
     include: ["test/int/**/*.int.test.ts"],
     poolOptions: {
       workers: {
+        // Per-test isolated storage crashes with R2 buckets in this pool version,
+        // so we share storage and reset D1 per test via resetDb(). singleWorker
+        // runs the int files sequentially so they can't race on that shared D1.
+        isolatedStorage: false,
+        singleWorker: true,
         miniflare: {
           compatibilityDate: "2025-01-01",
           compatibilityFlags: ["nodejs_compat"],
