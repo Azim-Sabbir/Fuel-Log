@@ -11,7 +11,12 @@ export interface Env {
   APP_URL: string;
 }
 
+import type { User } from "./db";
+
 // Data attached to the request context by the auth middleware for protected routes.
-export interface AuthData {
+// A type alias (not an interface) so it satisfies PagesFunction's
+// `Data extends Record<string, unknown>` constraint.
+export type AuthData = {
   userId: number;
-}
+  user: User;
+};
