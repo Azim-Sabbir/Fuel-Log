@@ -1,16 +1,27 @@
 import { env } from "cloudflare:test";
-// Vite raw import keeps the test schema in lockstep with the real migration.
-import schema from "../../migrations/0001_init.sql?raw";
+// Vite raw imports keep the test schema in lockstep with the real migrations.
+import schema0001 from "../../migrations/0001_init.sql?raw";
+import schema0002 from "../../migrations/0002_service_reminders.sql?raw";
 
-const TABLES = ["fuel_entries", "vehicles", "auth_sessions", "users"];
+// Child tables first so drops don't trip foreign keys.
+const TABLES = [
+  "fuel_entries",
+  "service_entries",
+  "reminders",
+  "vehicles",
+  "auth_sessions",
+  "users",
+];
 
-/** Drop and recreate all tables from the migration. Call in beforeEach. */
+/** Drop and recreate all tables from the migrations. Call in beforeEach. */
 export async function resetDb() {
   for (const t of TABLES) {
     await env.DB.prepare(`DROP TABLE IF EXISTS ${t}`).run();
   }
-  for (const stmt of schema.split(";").map((s) => s.trim()).filter(Boolean)) {
-    await env.DB.prepare(stmt).run();
+  for (const schema of [schema0001, schema0002]) {
+    for (const stmt of schema.split(";").map((s) => s.trim()).filter(Boolean)) {
+      await env.DB.prepare(stmt).run();
+    }
   }
 }
 

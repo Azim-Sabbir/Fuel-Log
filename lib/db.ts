@@ -41,6 +41,33 @@ export interface FuelEntry {
   created_at: string;
 }
 
+export interface ServiceEntry {
+  id: number;
+  user_id: number;
+  vehicle_id: number;
+  date: string;
+  odometer: number;
+  type: string;
+  cost: number;
+  location: string | null;
+  notes: string | null;
+  trip_id: number | null;
+  receipt_key: string | null;
+  created_at: string;
+}
+
+export interface Reminder {
+  id: number;
+  user_id: number;
+  vehicle_id: number;
+  type: string;
+  interval_km: number | null;
+  interval_days: number | null;
+  last_done_odometer: number | null;
+  last_done_date: string | null;
+  created_at: string;
+}
+
 // ---------- users + sessions ----------
 
 export async function upsertUserByGoogleSub(
@@ -156,12 +183,11 @@ export async function updateVehicle(
     .first<Vehicle>();
 }
 
-/** Delete a vehicle and its fuel entries. Returns rows deleted (0 if not owned). */
+/** Delete a vehicle and all its child records. Returns rows deleted (0 if not owned). */
 export async function deleteVehicle(db: D1Database, userId: number, id: number): Promise<number> {
-  await db
-    .prepare(`DELETE FROM fuel_entries WHERE vehicle_id = ? AND user_id = ?`)
-    .bind(id, userId)
-    .run();
+  for (const table of ["fuel_entries", "service_entries", "reminders"]) {
+    await db.prepare(`DELETE FROM ${table} WHERE vehicle_id = ? AND user_id = ?`).bind(id, userId).run();
+  }
   const res = await db
     .prepare(`DELETE FROM vehicles WHERE id = ? AND user_id = ?`)
     .bind(id, userId)
@@ -279,5 +305,186 @@ export async function deleteFuelEntry(db: D1Database, userId: number, id: number
     .prepare(`DELETE FROM fuel_entries WHERE id = ? AND user_id = ?`)
     .bind(id, userId)
     .run();
+  return res.meta.changes ?? 0;
+}
+
+// ---------- service entries ----------
+
+export async function createServiceEntry(
+  db: D1Database,
+  userId: number,
+  e: {
+    vehicleId: number;
+    date: string;
+    odometer: number;
+    type: string;
+    cost?: number;
+    location?: string | null;
+    notes?: string | null;
+    now: string;
+  }
+): Promise<ServiceEntry> {
+  const row = await db
+    .prepare(
+      `INSERT INTO service_entries (user_id, vehicle_id, date, odometer, type, cost, location, notes, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+    )
+    .bind(userId, e.vehicleId, e.date, e.odometer, e.type, e.cost ?? 0, e.location ?? null, e.notes ?? null, e.now)
+    .first<ServiceEntry>();
+  return row!;
+}
+
+export async function listServiceEntries(
+  db: D1Database,
+  userId: number,
+  vehicleId: number
+): Promise<ServiceEntry[]> {
+  const res = await db
+    .prepare(
+      `SELECT * FROM service_entries WHERE user_id = ? AND vehicle_id = ?
+       ORDER BY date ASC, odometer ASC, id ASC`
+    )
+    .bind(userId, vehicleId)
+    .all<ServiceEntry>();
+  return res.results ?? [];
+}
+
+export async function getServiceEntry(
+  db: D1Database,
+  userId: number,
+  id: number
+): Promise<ServiceEntry | null> {
+  return await db
+    .prepare(`SELECT * FROM service_entries WHERE id = ? AND user_id = ?`)
+    .bind(id, userId)
+    .first<ServiceEntry>();
+}
+
+export async function updateServiceEntry(
+  db: D1Database,
+  userId: number,
+  id: number,
+  f: { date?: string; odometer?: number; type?: string; cost?: number; location?: string; notes?: string }
+): Promise<ServiceEntry | null> {
+  return await db
+    .prepare(
+      `UPDATE service_entries SET
+         date = COALESCE(?, date),
+         odometer = COALESCE(?, odometer),
+         type = COALESCE(?, type),
+         cost = COALESCE(?, cost),
+         location = COALESCE(?, location),
+         notes = COALESCE(?, notes)
+       WHERE id = ? AND user_id = ? RETURNING *`
+    )
+    .bind(f.date ?? null, f.odometer ?? null, f.type ?? null, f.cost ?? null, f.location ?? null, f.notes ?? null, id, userId)
+    .first<ServiceEntry>();
+}
+
+export async function deleteServiceEntry(
+  db: D1Database,
+  userId: number,
+  id: number
+): Promise<number> {
+  const res = await db
+    .prepare(`DELETE FROM service_entries WHERE id = ? AND user_id = ?`)
+    .bind(id, userId)
+    .run();
+  return res.meta.changes ?? 0;
+}
+
+// ---------- reminders ----------
+
+export async function createReminder(
+  db: D1Database,
+  userId: number,
+  r: {
+    vehicleId: number;
+    type: string;
+    intervalKm?: number | null;
+    intervalDays?: number | null;
+    lastDoneOdometer?: number | null;
+    lastDoneDate?: string | null;
+    now: string;
+  }
+): Promise<Reminder> {
+  const row = await db
+    .prepare(
+      `INSERT INTO reminders (user_id, vehicle_id, type, interval_km, interval_days, last_done_odometer, last_done_date, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`
+    )
+    .bind(
+      userId,
+      r.vehicleId,
+      r.type,
+      r.intervalKm ?? null,
+      r.intervalDays ?? null,
+      r.lastDoneOdometer ?? null,
+      r.lastDoneDate ?? null,
+      r.now
+    )
+    .first<Reminder>();
+  return row!;
+}
+
+export async function listReminders(
+  db: D1Database,
+  userId: number,
+  vehicleId: number
+): Promise<Reminder[]> {
+  const res = await db
+    .prepare(`SELECT * FROM reminders WHERE user_id = ? AND vehicle_id = ? ORDER BY id ASC`)
+    .bind(userId, vehicleId)
+    .all<Reminder>();
+  return res.results ?? [];
+}
+
+export async function getReminder(
+  db: D1Database,
+  userId: number,
+  id: number
+): Promise<Reminder | null> {
+  return await db
+    .prepare(`SELECT * FROM reminders WHERE id = ? AND user_id = ?`)
+    .bind(id, userId)
+    .first<Reminder>();
+}
+
+export async function updateReminder(
+  db: D1Database,
+  userId: number,
+  id: number,
+  f: {
+    type?: string;
+    intervalKm?: number;
+    intervalDays?: number;
+    lastDoneOdometer?: number;
+    lastDoneDate?: string;
+  }
+): Promise<Reminder | null> {
+  return await db
+    .prepare(
+      `UPDATE reminders SET
+         type = COALESCE(?, type),
+         interval_km = COALESCE(?, interval_km),
+         interval_days = COALESCE(?, interval_days),
+         last_done_odometer = COALESCE(?, last_done_odometer),
+         last_done_date = COALESCE(?, last_done_date)
+       WHERE id = ? AND user_id = ? RETURNING *`
+    )
+    .bind(
+      f.type ?? null,
+      f.intervalKm ?? null,
+      f.intervalDays ?? null,
+      f.lastDoneOdometer ?? null,
+      f.lastDoneDate ?? null,
+      id,
+      userId
+    )
+    .first<Reminder>();
+}
+
+export async function deleteReminder(db: D1Database, userId: number, id: number): Promise<number> {
+  const res = await db.prepare(`DELETE FROM reminders WHERE id = ? AND user_id = ?`).bind(id, userId).run();
   return res.meta.changes ?? 0;
 }

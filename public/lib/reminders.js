@@ -16,12 +16,12 @@ function daysBetween(a, b) {
   return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000);
 }
 
-/**
- * @param reminder  { interval_km, interval_days, last_done_odometer, last_done_date } (any may be null)
- * @param current   { odometer, date }
- * @param thresholds { km, days } — how close counts as "due soon"
- * @returns { status: "ok"|"due_soon"|"overdue", remainingKm, remainingDays, nextDueOdometer, nextDueDate }
- */
+// reminder: { interval_km, interval_days, last_done_odometer, last_done_date } (any may be null)
+// current:  { odometer, date }
+// thresholds: { km, days } — how close counts as "due soon"
+// Returns { status: "ok" | "due_soon" | "overdue", remainingKm, remainingDays,
+//           nextDueOdometer, nextDueDate } (remaining/next fields are null when
+//           that dimension isn't configured).
 export function reminderStatus(reminder, current, thresholds = { km: 500, days: 14 }) {
   let remainingKm = null;
   let nextDueOdometer = null;
