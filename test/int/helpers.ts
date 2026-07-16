@@ -13,3 +13,23 @@ export async function resetDb() {
     await env.DB.prepare(stmt).run();
   }
 }
+
+/** Build a request context as the auth middleware would hand it to a handler
+ *  (userId already resolved into ctx.data). */
+export function authCtx(
+  url: string,
+  userId: number,
+  opts: { method?: string; body?: unknown; params?: Record<string, string> } = {}
+): any {
+  const init: RequestInit = { method: opts.method ?? "GET" };
+  if (opts.body !== undefined) {
+    init.body = JSON.stringify(opts.body);
+    init.headers = { "Content-Type": "application/json" };
+  }
+  return {
+    request: new Request("https://x" + url, init),
+    env,
+    data: { userId },
+    params: opts.params ?? {},
+  };
+}
