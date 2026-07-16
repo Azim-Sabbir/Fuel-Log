@@ -1,0 +1,3 @@
+# Copy to .dev.vars locally (.dev.vars is gitignored). App-specific secrets get
+# added here as the feature set is defined.
+ACCESS_KEY=generate-with-openssl-rand-hex-32

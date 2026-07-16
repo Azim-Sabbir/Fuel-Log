@@ -1,0 +1,15 @@
+name = "fuel-log"
+pages_build_output_dir = "public"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Cloudflare resource ids are filled in after the D1 database and KV namespace
+# are created (`wrangler d1 create fuel-log-db`, `wrangler kv namespace create SETTINGS`).
+[[d1_databases]]
+binding = "DB"
+database_name = "fuel-log-db"
+database_id = "REPLACE_AFTER_D1_CREATE"
+
+[[kv_namespaces]]
+binding = "SETTINGS"
+id = "REPLACE_AFTER_KV_CREATE"

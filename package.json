@@ -1,0 +1,23 @@
+{
+  "name": "fuel-log",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:int": "vitest run --config vitest.workers.config.ts",
+    "test": "npm run test:unit && npm run test:int",
+    "deploy": "wrangler pages deploy public --project-name fuel-log",
+    "db:local": "wrangler d1 migrations apply fuel-log-db --local",
+    "db:remote": "wrangler d1 migrations apply fuel-log-db --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.7.1",
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.6.0",
+    "vitest": "~2.1.0",
+    "wrangler": "^3.90.0"
+  }
+}

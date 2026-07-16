@@ -1,0 +1,19 @@
+# Secrets — NEVER commit these
+credentials.json
+*token*.txt
+.dev.vars
+.env
+.env.*
+
+# Cloudflare / Wrangler
+.wrangler/
+dist/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
